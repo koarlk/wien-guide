@@ -18,6 +18,7 @@
   --tier-cheap:#5eead4;
   --tier-everyday:#fbbf24;
   --tier-fancy:#c084fc;
+  --tier-pizza:#ff8a75;
 
   --radius:20px;
   --font-display:'Fraunces',Georgia,serif;
@@ -211,6 +212,28 @@ body{
   box-shadow:0 14px 34px -8px rgba(227,194,131,0.55);
 }
 
+/* ---------- Pizza-Ranking-Button ---------- */
+.pizza-jump{
+  margin-top:30px;
+  padding:13px 26px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--tier-pizza) 45%, transparent);
+  background:rgba(255,255,255,0.03);
+  color:var(--text-dim);
+  font-family:var(--font-body, inherit);
+  font-size:0.85rem;
+  font-weight:600;
+  letter-spacing:0.06em;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+.pizza-jump:hover{
+  color:var(--tier-pizza);
+  border-color:var(--tier-pizza);
+  transform:translateY(-3px);
+  box-shadow:0 12px 28px -10px color-mix(in srgb, var(--tier-pizza) 55%, transparent);
+}
+
 /* ---------- Scroll-Hinweis ---------- */
 .scroll-hint{
   margin-top:40px;
@@ -367,6 +390,7 @@ body{
 .card.tier-cheapEat{ --tier:var(--tier-cheap); }
 .card.tier-everyday{ --tier:var(--tier-everyday); }
 .card.tier-notSoEveryday{ --tier:var(--tier-fancy); }
+.card.tier-pizza{ --tier:var(--tier-pizza); }
 
 .card .card-district{
   color:var(--gold);
@@ -532,6 +556,14 @@ body{
   border-color:var(--tier-fancy);
   box-shadow:0 0 18px -2px var(--tier-fancy), 0 6px 16px rgba(0,0,0,0.55);
 }
+.spot-marker .dot.tier-pizza{
+  border-color:var(--tier-pizza);
+  box-shadow:0 0 18px -2px var(--tier-pizza), 0 6px 16px rgba(0,0,0,0.55);
+  font-family:var(--font-display);
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--tier-pizza);
+}
 .spot-marker .dot.is-active{
   transform:scale(1.35);
 }
@@ -545,6 +577,7 @@ body{
 .spot-marker .dot.tier-cheapEat.is-active::after{ color:var(--tier-cheap); }
 .spot-marker .dot.tier-everyday.is-active::after{ color:var(--tier-everyday); }
 .spot-marker .dot.tier-notSoEveryday.is-active::after{ color:var(--tier-fancy); }
+.spot-marker .dot.tier-pizza.is-active::after{ color:var(--tier-pizza); }
 @keyframes ring{
   0%{ transform:scale(1); opacity:0.8; }
   100%{ transform:scale(2.1); opacity:0; }

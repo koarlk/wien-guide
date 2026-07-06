@@ -19,6 +19,7 @@ const VIENNA_CENTER = [48.2082, 16.3738];
 let map = null;
 let markersLayer = null;
 let markerByTier = {};
+let pizzaMarkerByRank = {};
 let outlineByNum = {};
 let activeOutline = null;
 let currentDistrictNumber = null;
@@ -83,6 +84,7 @@ function updateMarkers(d){
   }
   markersLayer = L.layerGroup().addTo(map);
   markerByTier = {};
+  pizzaMarkerByRank = {};
   TIERS.forEach(tier => {
     const spot = d.spots[tier.key];
     if (!spot.coords) return;
@@ -121,6 +123,42 @@ function initDistrictOutlines(){
       outlineByNum[feature.properties.BEZNR] = layer;
     }
   }).addTo(map);
+}
+
+function pizzaMarkerIcon(p){
+  return L.divIcon({
+    className: 'spot-marker',
+    html: `<span class="dot tier-pizza">${p.rank}</span>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -20]
+  });
+}
+
+/* Alle Pizzerien des Rankings als nummerierte Marker zeigen (Crossfade wie updateMarkers). */
+function updatePizzaMarkers(){
+  const old = markersLayer;
+  if (old){
+    old.eachLayer(m => { if (m.setOpacity) m.setOpacity(0); });
+    setTimeout(() => map.removeLayer(old), 500);
+  }
+  markersLayer = L.layerGroup().addTo(map);
+  markerByTier = {};
+  pizzaMarkerByRank = {};
+  PIZZA_RANKING.forEach(p => {
+    const marker = L.marker(p.coords, { icon: pizzaMarkerIcon(p), opacity: 0 }).addTo(markersLayer);
+    marker.bindPopup(
+      `<strong>#${p.rank} ${p.name}</strong><br>` +
+      `<span class="popup-tier">🍕 ${p.category}</span><br>` +
+      `<span class="popup-address">${p.address}</span>`
+    );
+    pizzaMarkerByRank[p.rank] = marker;
+  });
+  Object.values(pizzaMarkerByRank).forEach(m => {
+    const el = m.getElement();
+    if (el) el.getBoundingClientRect();
+    m.setOpacity(1);
+  });
 }
 
 function highlightDistrict(num){
@@ -203,11 +241,19 @@ function chapterHtml(d){
   `;
 }
 
-function spotStepHtml(tier, spot, d){
-  const fullStars = Math.round(spot.rating);
-  const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+function starsHtml(rating){
+  const fullStars = Math.round(rating);
+  return '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+}
+
+function mapLinkHtml(spot){
   const mapsQuery = encodeURIComponent(spot.name + ' ' + spot.address);
   const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + mapsQuery;
+  return `<a class="map-link" href="${mapsUrl}" data-app-url="comgooglemaps://?q=${mapsQuery}" target="_blank" rel="noopener">Auf Google Maps öffnen</a>`;
+}
+
+function spotStepHtml(tier, spot, d){
+  const stars = starsHtml(spot.rating);
 
   return `
     <section class="step" data-district="${d.number}" data-tier="${tier.key}">
@@ -223,16 +269,52 @@ function spotStepHtml(tier, spot, d){
         <p class="description">${spot.description}</p>
         <div class="address">📍 ${spot.address}</div>
         <div class="tags">${spot.tags.map(t => `<span>${t}</span>`).join('')}</div>
-        <a class="map-link" href="${mapsUrl}" data-app-url="comgooglemaps://?q=${mapsQuery}" target="_blank" rel="noopener">Auf Google Maps öffnen</a>
+        ${mapLinkHtml(spot)}
+      </div>
+    </section>
+  `;
+}
+
+function pizzaChapterHtml(){
+  return `
+    <section class="chapter" data-pizza-chapter>
+      <div class="chapter-inner">
+        <div class="ch-num">🍕 Das Ranking</div>
+        <div class="ch-name">Die besten Pizzerien der Stadt</div>
+        <div class="ch-rule"></div>
+      </div>
+    </section>
+  `;
+}
+
+function pizzaStepHtml(p){
+  return `
+    <section class="step" data-pizza="${p.rank}">
+      <div class="card tier-pizza">
+        <div class="card-district">Pizza-Ranking</div>
+        <div class="eyebrow">🍕 Platz ${p.rank} von ${PIZZA_RANKING.length}</div>
+        <h2>${p.name}</h2>
+        <div class="category">${p.category}</div>
+        <div class="meta-row">
+          <span class="rating"><span class="stars">${starsHtml(p.rating)}</span> ${p.rating.toFixed(1)}</span>
+          <span class="price">${p.priceLevel}</span>
+        </div>
+        <p class="description">${p.description}</p>
+        <div class="address">📍 ${p.address}</div>
+        <div class="tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
+        ${mapLinkHtml(p)}
       </div>
     </section>
   `;
 }
 
 function renderJourney(){
-  stepsWrap.innerHTML = DISTRICTS.map(d =>
-    chapterHtml(d) + TIERS.map(tier => spotStepHtml(tier, d.spots[tier.key], d)).join('')
-  ).join('');
+  stepsWrap.innerHTML =
+    DISTRICTS.map(d =>
+      chapterHtml(d) + TIERS.map(tier => spotStepHtml(tier, d.spots[tier.key], d)).join('')
+    ).join('') +
+    pizzaChapterHtml() +
+    PIZZA_RANKING.map(pizzaStepHtml).join('');
   sections = Array.from(stepsWrap.querySelectorAll('section'));
 }
 
@@ -286,6 +368,45 @@ function setState(num, tier){
   });
 }
 
+/* Pizza-Ranking: eigener Modus neben den Bezirken. currentDistrictNumber
+   bekommt den Sentinel 'pizza', damit der Wechsel von/zu Bezirken die
+   Marker und den Umriss genau einmal umbaut. */
+function setPizzaState(rank){
+  const key = `pizza:${rank || 'chapter'}`;
+  if (key === activeKey) return;
+  activeKey = key;
+
+  if (currentDistrictNumber !== 'pizza'){
+    currentDistrictNumber = 'pizza';
+    highlightDistrict(null);
+    updatePizzaMarkers();
+    hud.classList.add('visible');
+    hudNum.textContent = '🍕';
+    hudName.textContent = 'Die besten Pizzerien';
+    stepDots.classList.remove('visible');
+    document.querySelectorAll('.district-chips button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+  }
+
+  document.querySelectorAll('#steps .step').forEach(step => {
+    step.classList.toggle('active', Number(step.dataset.pizza) === rank);
+  });
+  Object.entries(pizzaMarkerByRank).forEach(([r, marker]) => {
+    const dot = marker.getElement() && marker.getElement().querySelector('.dot');
+    if (dot) dot.classList.toggle('is-active', Number(r) === rank);
+  });
+
+  queueFlight(() => {
+    const p = rank && PIZZA_RANKING.find(x => x.rank === rank);
+    if (p){
+      flyToSpot(p.coords);
+    } else {
+      map.flyToBounds(PIZZA_RANKING.map(x => x.coords), { padding: [70, 70], duration: 1.2 });
+    }
+  });
+}
+
 function queueFlight(fn){
   pendingFlight = fn;
   requestAnimationFrame(() => {
@@ -307,7 +428,9 @@ function syncActive(){
       break;
     }
   }
-  if (current){
+  if (current && (current.dataset.pizza || current.hasAttribute('data-pizza-chapter'))){
+    setPizzaState(current.dataset.pizza ? Number(current.dataset.pizza) : null);
+  } else if (current){
     setState(Number(current.dataset.district), current.dataset.tier || null);
   } else {
     setState(null, null);
@@ -420,6 +543,11 @@ stepDots.addEventListener('click', (e) => {
 
 hud.addEventListener('click', () => {
   scrollPageTo(0);
+});
+
+document.getElementById('pizzaJump').addEventListener('click', () => {
+  const chapter = stepsWrap.querySelector('[data-pizza-chapter]');
+  if (chapter) scrollToEl(chapter);
 });
 
 /* Auf iOS direkt in die Google-Maps-App: Universal Links aus target="_blank"

@@ -841,3 +841,98 @@ const TIERS = [
   { key: "everyday", label: "Every Day", emoji: "🍴" },
   { key: "notSoEveryday", label: "Not So Everyday", emoji: "✨" }
 ];
+
+/**
+ * Pizza-Ranking: die besten Pizzerien der Stadt, quer über alle Bezirke.
+ * Platz 1 ist laut "50 Top Pizza Europa 2026" die beste Pizzeria Österreichs.
+ */
+const PIZZA_RANKING = [
+  {
+    rank: 1,
+    name: "Via Toledo Enopizzeria",
+    category: "Neapolitanische Pizzeria",
+    rating: 4.6,
+    priceLevel: "€€€",
+    description: "Francesco Calòs Pizzen haben es unter die Top 10 Europas geschafft — beste Pizzeria Österreichs laut 50 Top Pizza.",
+    address: "Laudongasse 8, 1080 Wien",
+    coords: [48.2129, 16.3504],
+    tags: ["50 Top Pizza", "Neapolitanisch", "Josefstadt"]
+  },
+  {
+    rank: 2,
+    name: "Pizza Mari'",
+    category: "Neapolitanische Pizzeria",
+    rating: 4.5,
+    priceLevel: "€€",
+    description: "Die Mutter der neapolitanischen Welle in Wien — schlichtes Lokal, große Pizza, immer voll.",
+    address: "Leopoldsgasse 23a, 1020 Wien",
+    coords: [48.2187, 16.3746],
+    tags: ["Neapolitanisch", "Institution", "Karmeliterviertel"]
+  },
+  {
+    rank: 3,
+    name: "Disco Volante",
+    category: "Pizzeria & Bar",
+    rating: 4.4,
+    priceLevel: "€€",
+    description: "Der Pizzaofen ist eine sich drehende Discokugel — und die Pizza hält mit der Show locker mit.",
+    address: "Gumpendorfer Straße 98, 1060 Wien",
+    coords: [48.1946, 16.3482],
+    tags: ["Discokugel-Ofen", "Neapolitanisch", "Kult"]
+  },
+  {
+    rank: 4,
+    name: "Regina Margherita",
+    category: "Pizzeria & Ristorante",
+    rating: 4.4,
+    priceLevel: "€€€",
+    description: "Ein Stück Neapel mitten in der Altstadt — die Familie Barbaro steht seit über 30 Jahren für Qualität.",
+    address: "Wallnerstraße 4, 1010 Wien",
+    coords: [48.2097, 16.3663],
+    tags: ["Klassiker", "Altstadt", "Familienbetrieb"]
+  },
+  {
+    rank: 5,
+    name: "Pizzeria Riva",
+    category: "Neapolitanische Pizzeria",
+    rating: 4.4,
+    priceLevel: "€€",
+    description: "Neapolitaner der ersten Stunde in Wien — luftiger Teig, 60 Sekunden im Steinofen, fertig.",
+    address: "Türkenstraße 27, 1090 Wien",
+    coords: [48.2173, 16.3607],
+    tags: ["Neapolitanisch", "Steinofen", "Servitenviertel"]
+  },
+  {
+    rank: 6,
+    name: "Pizza Quartier",
+    category: "Pizzeria",
+    rating: 4.4,
+    priceLevel: "€€",
+    description: "Direkt am Karmelitermarkt: knuspriger Rand, ehrliche Zutaten und im Sommer Markt-Atmosphäre dazu.",
+    address: "Karmelitermarkt 96, 1020 Wien",
+    coords: [48.2168, 16.3776],
+    tags: ["Karmelitermarkt", "Markt-Flair", "Grätzl-Liebling"]
+  },
+  {
+    rank: 7,
+    name: "Il Sestante",
+    category: "Pizzeria & Ristorante",
+    rating: 4.3,
+    priceLevel: "€€",
+    description: "Josefstädter Klassiker mit Holzofen und Gastgarten — seit Jahrzehnten verlässlich gute Pizza.",
+    address: "Piaristengasse 50, 1080 Wien",
+    coords: [48.2100, 16.3488],
+    tags: ["Holzofen", "Gastgarten", "Klassiker"]
+  },
+  {
+    rank: 8,
+    name: "Scarabocchio",
+    category: "Pizzeria & Ristorante",
+    rating: 4.3,
+    priceLevel: "€€",
+    description: "Alteingesessene Josefstädter Pizzeria — unaufgeregt, herzlich und seit Jahrzehnten ein sicherer Wert.",
+    address: "Florianigasse 3, 1080 Wien",
+    coords: [48.2109, 16.3535],
+    tags: ["Alteingesessen", "Josefstadt", "Verlässlich"]
+  }
+];
