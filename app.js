@@ -317,10 +317,35 @@ function syncActive(){
   progress.style.width = (maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0) + '%';
 }
 
+/* Kurze Distanzen smooth scrollen; bei weiten Sprüngen würde das Smooth-
+   Scrolling durch alle dazwischenliegenden Bezirke rauschen. Stattdessen:
+   Story-Spalte kurz ausblenden, sofort springen, wieder einblenden — den
+   sichtbaren Übergang macht der eine Kartenflug zum Ziel. */
+const content = document.querySelector('.content');
+let teleportTimer = null;
+
+function scrollPageTo(top){
+  top = Math.max(top, 0);
+  // Schwelle ~ ein Bezirksblock (Kapitel 82vh + 3 Steps à ~100vh):
+  // innerhalb eines Bezirks immer smooth, ab Nachbarbezirk teleportieren.
+  if (Math.abs(top - window.scrollY) <= window.innerHeight * 4.5){
+    window.scrollTo({ top, behavior: 'smooth' });
+    return;
+  }
+  clearTimeout(teleportTimer);
+  content.classList.add('is-teleporting');
+  teleportTimer = setTimeout(() => {
+    // 'instant' statt 'auto': das globale scroll-behavior:smooth würde
+    // 'auto' wieder in einen Smooth-Scroll durch alle Bezirke verwandeln.
+    window.scrollTo({ top, behavior: 'instant' });
+    content.classList.remove('is-teleporting');
+  }, 240);
+}
+
 function scrollToEl(el){
   const rect = el.getBoundingClientRect();
   const top = rect.top + window.scrollY - (window.innerHeight - rect.height) / 2;
-  window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+  scrollPageTo(top);
 }
 
 function jumpToDistrict(num){
@@ -394,7 +419,7 @@ stepDots.addEventListener('click', (e) => {
 });
 
 hud.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollPageTo(0);
 });
 
 document.addEventListener('click', (e) => {

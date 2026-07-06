@@ -58,7 +58,10 @@ body{
   position:relative;
   z-index:2;
   pointer-events:none;
+  transition:opacity .22s ease;
 }
+/* Weiter Sprung: Story-Spalte kurz ausblenden, während die Seite teleportiert. */
+.content.is-teleporting{ opacity:0; }
 .content .intro-inner,
 .content .card,
 .content footer{
