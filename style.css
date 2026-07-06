@@ -501,7 +501,9 @@ body{
 .district-outline{
   filter:drop-shadow(0 0 7px rgba(227,194,131,0.75));
   transition:opacity .55s ease;
+  opacity:0;
 }
+.district-outline.is-active{ opacity:1; }
 
 /* ---------- Marker ---------- */
 .spot-marker{ transition:opacity .45s ease; }
