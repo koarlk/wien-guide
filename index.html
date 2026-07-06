@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WIEN — Bezirks-Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="map"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="bg-noise" aria-hidden="true"></div>
+
+  <div id="progress" class="progress" aria-hidden="true"></div>
+  <button id="hud" class="hud" type="button" title="Zurück zur Übersicht">
+    <span class="hud-num"></span><span class="hud-name"></span>
+  </button>
+  <nav id="stepDots" class="step-dots" aria-label="Lokale"></nav>
+
+  <main class="content">
+    <section class="intro" id="intro">
+      <div class="intro-inner">
+        <div class="overline">Der kuratierte Restaurant-Guide</div>
+        <h1>WIEN</h1>
+        <div class="subline">
+          <span class="rule"></span>
+          <span class="sub">23 Bezirke &nbsp;·&nbsp; 3 Adressen &nbsp;·&nbsp; null Kompromisse</span>
+          <span class="rule"></span>
+        </div>
+
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="districtInput" type="text" placeholder="Zu einem Bezirk springen — Name oder Nummer …" autocomplete="off" />
+          <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <nav id="districtChips" class="district-chips" aria-label="Bezirke"></nav>
+
+        <div class="scroll-hint">
+          <span>die Reise beginnt — durch alle 23 Bezirke</span>
+          <span class="arrow">↓</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="steps"></div>
+
+    <footer>
+      <span class="diamond">◆</span> kuratiert mit Geschmack &amp; Hunger <span class="diamond">◆</span>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="districts-geo.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
