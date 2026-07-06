@@ -45,6 +45,23 @@ function initMap(){
   map.setView(VIENNA_CENTER, 12);
 }
 
+/* Auf Touch-Geräten steuert allein das Scrollen die Karte:
+   Dragging/Pinch würden sonst das Seiten-Scrollen abfangen. */
+function setMapTouchMode(touch){
+  if (touch){
+    map.dragging.disable();
+    map.touchZoom.disable();
+  } else {
+    map.dragging.enable();
+    map.touchZoom.enable();
+  }
+}
+
+const coarsePointer = window.matchMedia('(hover: none), (pointer: coarse)');
+function syncTouchMode(){
+  setMapTouchMode(coarsePointer.matches);
+}
+
 function markerIcon(tier){
   return L.divIcon({
     className: 'spot-marker',
@@ -348,6 +365,8 @@ input.addEventListener('keydown', (e) => {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 initMap();
+syncTouchMode();
+if (coarsePointer.addEventListener) coarsePointer.addEventListener('change', syncTouchMode);
 renderChips();
 renderDots();
 renderJourney();
