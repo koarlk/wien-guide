@@ -23,6 +23,7 @@ let districtLayer = null;
 let currentDistrictNumber = null;
 let activeKey = null;
 let sections = [];
+let pendingFlight = null;
 
 /* ---------- Karte ---------- */
 
@@ -73,18 +74,30 @@ function markerIcon(tier){
 }
 
 function updateMarkers(d){
-  markersLayer.clearLayers();
+  // Alte Marker sanft ausblenden und erst danach entfernen (Crossfade).
+  const old = markersLayer;
+  if (old){
+    old.eachLayer(m => { if (m.setOpacity) m.setOpacity(0); });
+    setTimeout(() => map.removeLayer(old), 500);
+  }
+  markersLayer = L.layerGroup().addTo(map);
   markerByTier = {};
   TIERS.forEach(tier => {
     const spot = d.spots[tier.key];
     if (!spot.coords) return;
-    const marker = L.marker(spot.coords, { icon: markerIcon(tier) }).addTo(markersLayer);
+    const marker = L.marker(spot.coords, { icon: markerIcon(tier), opacity: 0 }).addTo(markersLayer);
     marker.bindPopup(
       `<strong>${spot.name}</strong><br>` +
       `<span class="popup-tier">${tier.emoji} ${tier.label} · ${spot.category}</span><br>` +
       `<span class="popup-address">${spot.address}</span>`
     );
     markerByTier[tier.key] = marker;
+  });
+  // Neue Marker einblenden: Reflow erzwingen, damit die Transition greift.
+  Object.values(markerByTier).forEach(m => {
+    const el = m.getElement();
+    if (el) el.getBoundingClientRect();
+    m.setOpacity(1);
   });
 }
 
@@ -258,14 +271,28 @@ function setState(num, tier){
     if (dot) dot.classList.toggle('is-active', tierKey === tier);
   });
 
-  if (!d){
-    showCity();
-  } else if (tier){
-    const spot = d.spots[tier];
-    if (spot && spot.coords) flyToSpot(spot.coords);
-  } else {
-    showOverview(d);
-  }
+  // Flug erst im nächsten Frame starten, damit der DOM-Umbau
+  // (Marker, Umriss, Reflows) die ersten Animationsframes nicht ruckeln lässt.
+  queueFlight(() => {
+    if (!d){
+      showCity();
+    } else if (tier){
+      const spot = d.spots[tier];
+      if (spot && spot.coords) flyToSpot(spot.coords);
+    } else {
+      showOverview(d);
+    }
+  });
+}
+
+function queueFlight(fn){
+  pendingFlight = fn;
+  requestAnimationFrame(() => {
+    if (pendingFlight === fn){
+      pendingFlight = null;
+      fn();
+    }
+  });
 }
 
 /* Welche Sektion kreuzt gerade die Bildschirmmitte? */
@@ -300,8 +327,20 @@ function jumpToDistrict(num){
   if (chapter) scrollToEl(chapter);
 }
 
-window.addEventListener('scroll', syncActive, { passive: true });
-window.addEventListener('resize', syncActive, { passive: true });
+/* Scroll-Events auf einen Abgleich pro Frame drosseln —
+   syncActive misst alle Sektionen und wäre pro Event zu teuer. */
+let scrollTick = false;
+function onScrollSync(){
+  if (scrollTick) return;
+  scrollTick = true;
+  requestAnimationFrame(() => {
+    scrollTick = false;
+    syncActive();
+  });
+}
+
+window.addEventListener('scroll', onScrollSync, { passive: true });
+window.addEventListener('resize', onScrollSync, { passive: true });
 
 /* ---------- Suche & Navigation ---------- */
 

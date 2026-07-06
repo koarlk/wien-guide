@@ -504,6 +504,7 @@ body{
 }
 
 /* ---------- Marker ---------- */
+.spot-marker{ transition:opacity .45s ease; }
 .spot-marker .dot{
   display:flex; align-items:center; justify-content:center;
   width:38px; height:38px;
