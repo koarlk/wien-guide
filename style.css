@@ -58,7 +58,10 @@ body{
   position:relative;
   z-index:2;
   pointer-events:none;
+  transition:opacity .22s ease;
 }
+/* Weiter Sprung: Story-Spalte kurz ausblenden, während die Seite teleportiert. */
+.content.is-teleporting{ opacity:0; }
 .content .intro-inner,
 .content .card,
 .content footer{
@@ -501,7 +504,9 @@ body{
 .district-outline{
   filter:drop-shadow(0 0 7px rgba(227,194,131,0.75));
   transition:opacity .55s ease;
+  opacity:0;
 }
+.district-outline.is-active{ opacity:1; }
 
 /* ---------- Marker ---------- */
 .spot-marker{ transition:opacity .45s ease; }

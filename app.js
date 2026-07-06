@@ -19,7 +19,8 @@ const VIENNA_CENTER = [48.2082, 16.3738];
 let map = null;
 let markersLayer = null;
 let markerByTier = {};
-let districtLayer = null;
+let outlineByNum = {};
+let activeOutline = null;
 let currentDistrictNumber = null;
 let activeKey = null;
 let sections = [];
@@ -101,21 +102,12 @@ function updateMarkers(d){
   });
 }
 
-function highlightDistrict(num){
-  // Alten Umriss sanft ausblenden statt hart zu entfernen (Crossfade).
-  if (districtLayer){
-    const old = districtLayer;
-    districtLayer = null;
-    old.eachLayer(l => {
-      const el = l.getElement();
-      if (el) el.style.opacity = '0';
-    });
-    setTimeout(() => map.removeLayer(old), 600);
-  }
-  if (!num) return;
-  const feature = DISTRICT_GEO.features.find(f => f.properties.BEZNR === num);
-  if (!feature) return;
-  districtLayer = L.geoJSON(feature, {
+/* Alle Umrisse einmalig anlegen, solange die Karte ruht: Pfade, die mitten
+   in einer flyTo-Animation hinzugefügt werden, projiziert Leaflet falsch und
+   sie springen beim Animationsende an ihre Position. Danach wird nur noch
+   per CSS-Klasse ein-/ausgeblendet. */
+function initDistrictOutlines(){
+  L.geoJSON(DISTRICT_GEO, {
     interactive: false,
     style: {
       className: 'district-outline',
@@ -124,21 +116,30 @@ function highlightDistrict(num){
       opacity: 0.9,
       fillColor: '#e3c283',
       fillOpacity: 0.06
+    },
+    onEachFeature: (feature, layer) => {
+      outlineByNum[feature.properties.BEZNR] = layer;
     }
   }).addTo(map);
-  // Neuen Umriss einblenden: erst unsichtbar setzen, Reflow erzwingen, dann faden.
-  districtLayer.eachLayer(l => {
-    const el = l.getElement();
-    if (!el) return;
-    el.style.opacity = '0';
-    el.getBoundingClientRect();
-    el.style.opacity = '1';
-  });
+}
+
+function highlightDistrict(num){
+  if (activeOutline){
+    const el = activeOutline.getElement();
+    if (el) el.classList.remove('is-active');
+    activeOutline = null;
+  }
+  if (!num) return;
+  const layer = outlineByNum[num];
+  if (!layer) return;
+  activeOutline = layer;
+  const el = layer.getElement();
+  if (el) el.classList.add('is-active');
 }
 
 function showOverview(d){
-  if (districtLayer){
-    map.flyToBounds(districtLayer.getBounds(), { padding: [60, 60], duration: 1.2 });
+  if (activeOutline){
+    map.flyToBounds(activeOutline.getBounds(), { padding: [60, 60], duration: 1.2 });
     return;
   }
   const coords = TIERS.map(t => d.spots[t.key].coords).filter(Boolean);
@@ -316,10 +317,35 @@ function syncActive(){
   progress.style.width = (maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0) + '%';
 }
 
+/* Kurze Distanzen smooth scrollen; bei weiten Sprüngen würde das Smooth-
+   Scrolling durch alle dazwischenliegenden Bezirke rauschen. Stattdessen:
+   Story-Spalte kurz ausblenden, sofort springen, wieder einblenden — den
+   sichtbaren Übergang macht der eine Kartenflug zum Ziel. */
+const content = document.querySelector('.content');
+let teleportTimer = null;
+
+function scrollPageTo(top){
+  top = Math.max(top, 0);
+  // Schwelle ~ ein Bezirksblock (Kapitel 82vh + 3 Steps à ~100vh):
+  // innerhalb eines Bezirks immer smooth, ab Nachbarbezirk teleportieren.
+  if (Math.abs(top - window.scrollY) <= window.innerHeight * 4.5){
+    window.scrollTo({ top, behavior: 'smooth' });
+    return;
+  }
+  clearTimeout(teleportTimer);
+  content.classList.add('is-teleporting');
+  teleportTimer = setTimeout(() => {
+    // 'instant' statt 'auto': das globale scroll-behavior:smooth würde
+    // 'auto' wieder in einen Smooth-Scroll durch alle Bezirke verwandeln.
+    window.scrollTo({ top, behavior: 'instant' });
+    content.classList.remove('is-teleporting');
+  }, 240);
+}
+
 function scrollToEl(el){
   const rect = el.getBoundingClientRect();
   const top = rect.top + window.scrollY - (window.innerHeight - rect.height) / 2;
-  window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+  scrollPageTo(top);
 }
 
 function jumpToDistrict(num){
@@ -393,7 +419,7 @@ stepDots.addEventListener('click', (e) => {
 });
 
 hud.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollPageTo(0);
 });
 
 document.addEventListener('click', (e) => {
@@ -418,6 +444,7 @@ input.addEventListener('keydown', (e) => {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 initMap();
+initDistrictOutlines();
 syncTouchMode();
 if (coarsePointer.addEventListener) coarsePointer.addEventListener('change', syncTouchMode);
 renderChips();
