@@ -89,9 +89,15 @@ function updateMarkers(d){
 }
 
 function highlightDistrict(num){
+  // Alten Umriss sanft ausblenden statt hart zu entfernen (Crossfade).
   if (districtLayer){
-    map.removeLayer(districtLayer);
+    const old = districtLayer;
     districtLayer = null;
+    old.eachLayer(l => {
+      const el = l.getElement();
+      if (el) el.style.opacity = '0';
+    });
+    setTimeout(() => map.removeLayer(old), 600);
   }
   if (!num) return;
   const feature = DISTRICT_GEO.features.find(f => f.properties.BEZNR === num);
@@ -107,6 +113,14 @@ function highlightDistrict(num){
       fillOpacity: 0.06
     }
   }).addTo(map);
+  // Neuen Umriss einblenden: erst unsichtbar setzen, Reflow erzwingen, dann faden.
+  districtLayer.eachLayer(l => {
+    const el = l.getElement();
+    if (!el) return;
+    el.style.opacity = '0';
+    el.getBoundingClientRect();
+    el.style.opacity = '1';
+  });
 }
 
 function showOverview(d){
