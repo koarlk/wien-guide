@@ -206,8 +206,8 @@ function chapterHtml(d){
 function spotStepHtml(tier, spot, d){
   const fullStars = Math.round(spot.rating);
   const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
-  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
-    encodeURIComponent(spot.name + ' ' + spot.address);
+  const mapsQuery = encodeURIComponent(spot.name + ' ' + spot.address);
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + mapsQuery;
 
   return `
     <section class="step" data-district="${d.number}" data-tier="${tier.key}">
@@ -223,7 +223,7 @@ function spotStepHtml(tier, spot, d){
         <p class="description">${spot.description}</p>
         <div class="address">📍 ${spot.address}</div>
         <div class="tags">${spot.tags.map(t => `<span>${t}</span>`).join('')}</div>
-        <a class="map-link" href="${mapsUrl}" target="_blank" rel="noopener">Auf Google Maps öffnen</a>
+        <a class="map-link" href="${mapsUrl}" data-app-url="comgooglemaps://?q=${mapsQuery}" target="_blank" rel="noopener">Auf Google Maps öffnen</a>
       </div>
     </section>
   `;
@@ -420,6 +420,26 @@ stepDots.addEventListener('click', (e) => {
 
 hud.addEventListener('click', () => {
   scrollPageTo(0);
+});
+
+/* Auf iOS direkt in die Google-Maps-App: Universal Links aus target="_blank"
+   öffnen die App nicht zuverlässig, daher das App-Schema ansteuern und auf
+   die Web-URL zurückfallen, wenn die App fehlt (Seite bleibt dann sichtbar).
+   Android öffnet die App bereits über den normalen https-Link (App Links). */
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+stepsWrap.addEventListener('click', (e) => {
+  const link = e.target.closest('.map-link');
+  if (!link || !isIOSDevice()) return;
+  e.preventDefault();
+  const fallback = setTimeout(() => { window.location.href = link.href; }, 1200);
+  const cancel = () => clearTimeout(fallback);
+  window.addEventListener('pagehide', cancel, { once: true });
+  document.addEventListener('visibilitychange', cancel, { once: true });
+  window.location.href = link.dataset.appUrl;
 });
 
 document.addEventListener('click', (e) => {
